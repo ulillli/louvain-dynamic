@@ -1,5 +1,6 @@
 #include "louvain.h"
-#include "dynamic_graph.h"
+#include "louvainOptimization.h"
+//#include "dynamic_graph.h"
 #include <string>
 
 int main() {
@@ -27,12 +28,22 @@ int main() {
 	//	louvain<std::vector<std::pair<int, double>>> L(snap);
 	//}
 
-	std::string s = "../data/web-NotreDame.txt";
+	/*std::string s = "../data/web-NotreDame.txt";
 	graph<std::vector<std::pair<int, double>>> G(s.data());
 
 	std::cout << "Count of nodes: " << G.getVertexCount() << std::endl;
 	std::cout << "Weight of edges = " << G.getEdgeCount() << std::endl;
 	louvain<std::vector<std::pair<int, double>>> L(G);
-	std::cout << std::endl;
+	std::cout << std::endl;*/
+
+	for (int i = 27; i < 28; i++) {
+		std::string s = "../data/graph" + std::to_string(i) + ".txt";
+		graph<std::vector<std::pair<int, double>>> G(s.data());
+
+		std::cout << "Count of nodes: " << G.getVertexCount() << std::endl;
+		std::cout << "Weight of edges = " << G.getEdgeCount() << std::endl;
+		louvain<std::vector<std::pair<int, double>>> L(G);
+		std::cout << std::endl;
+	}
 	return 0;
 }

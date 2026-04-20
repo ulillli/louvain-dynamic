@@ -50,9 +50,10 @@ public:
 	void insert(int v, int C, const graph<T>& g, std::vector<int>& partition);
 	std::pair<double, int> getBestDelta(const graph<T>& g, const int& v, std::vector<int>& partition);
 	void aggregateGraphOptimizedNew(graph<T>& g, std::vector<int>& partition);
+	void aggregateGraphOptimizedNew2(graph<T>& g, std::vector<int>& partition);
 	void aggregateGraphOptimized(graph<T>& g, std::vector<int>& partition);
 	void moveNodes(graph<T>& g, std::vector<int>& partition);
-	void moveNodesNew(graph<T>& g, std::vector<int>& partition);
+	bool moveNodesNew(graph<T>& g, std::vector<int>& partition);
 	louvain(const graph<T>& G);
 };
 
@@ -345,6 +346,51 @@ void louvain<T>::aggregateGraphOptimizedNew(graph<T>& g, std::vector<int>& parti
 	g = graph<T>(adj, loops, n, m / 2);
 	setSinglePartition(teck_community_count);
 }
+template<class T>
+void louvain<T>::aggregateGraphOptimizedNew2(graph<T>& g, std::vector<int>& partition) {
+	int n = g.getVertexCount();
+
+	std::vector<int> renumber(teck_community_count, -1);
+	int new_count = 0;
+	for (int v = 0; v < n; v++) {
+		int c = partition[v];
+		if (renumber[c] == -1) {
+			renumber[c] = new_count++;
+		}
+		partition[v] = renumber[c];
+	}
+
+	if (new_count == n) return;
+
+	for (int i = 0; i < N; i++) {
+		result[i] = partition[result[i]];
+	}
+	teck_community_count = new_count;
+	std::vector<std::vector<std::pair<int, double>>> adj(teck_community_count);
+	std::vector<double> loops(teck_community_count, 0.0);
+	std::vector<std::unordered_map<int, double>> edge_maps(teck_community_count);
+	double m = 0;
+	for (int v = 0; v < n; ++v) {
+		int v_comm = partition[v];
+		for (const auto& edge : g[v]) {
+			int u = edge.first;
+			double weight = edge.second;
+			int u_comm = partition[u];
+			m += weight;
+			if (v_comm == u_comm)loops[v_comm] += weight;
+			edge_maps[v_comm][u_comm] += weight;
+		}
+	}
+	for (int i = 0; i < teck_community_count; ++i) {
+		adj[i].reserve(edge_maps[i].size());
+		for (const auto& [neighbor, weight] : edge_maps[i]) {
+			adj[i].emplace_back(neighbor, weight);
+		}
+	}
+	n = teck_community_count;
+	g = graph<T>(adj, loops, n, m / 2);
+	setSinglePartition(teck_community_count);
+}
 // в d_i_to_c учитываются связи только с другими вершинами, петли нет
 template<class T>
 void louvain<T>::moveNodes(graph<T>& g, std::vector<int>& partition) {
@@ -372,14 +418,15 @@ void louvain<T>::moveNodes(graph<T>& g, std::vector<int>& partition) {
 		}
 		//printTeckCommunities();
 		current_modularity = getModularityOptimized(g, partition, 1);
-	//	std::cout << current_modularity << std::endl;
+	//std::cout << current_modularity << std::endl;
 	} while (current_modularity > old_modularity);
 }
 template<class T>
-void louvain<T>::moveNodesNew(graph<T>& g, std::vector<int>& partition) {
+bool louvain<T>::moveNodesNew(graph<T>& g, std::vector<int>& partition) {
 	int n = g.getVertexCount();
 	std::cout << std::setprecision(15);
 	bool flag = 1;
+	bool changed = 0;
 	do {
 		flag = 0;
 		for (int v = 0; v < n; v++) {
@@ -387,9 +434,8 @@ void louvain<T>::moveNodesNew(graph<T>& g, std::vector<int>& partition) {
 			std::pair<double, int> best_delta = getBestDelta(g, v, partition);
 			if (best_delta.first > 0.0 && best_delta.second != v_community) {
 				flag = 1;
+				changed = 1;
 				partition[v] = best_delta.second;
-				teck_communities[best_delta.second].insert(v);
-				teck_communities[v_community].erase(v);
 				for (int j = 0; j < g[v].size(); j++) {
 					if (v != g[v][j].first) {
 						d_i_to_c[g[v][j].first][best_delta.second] += g[v][j].second;
@@ -400,6 +446,7 @@ void louvain<T>::moveNodesNew(graph<T>& g, std::vector<int>& partition) {
 			}
 		}
 	} while (flag);
+	return changed;
 }
 
 template<class T>
@@ -430,12 +477,11 @@ louvain<T>::louvain(const graph<T>& G) {
 	first_modularity = old;
 	std::cout << "Modularity: " << old << '\n';
 	do {
-		moveNodes(g, teck_partition);
-		double curr = getModularityOptimized(g, teck_partition, 1);
-		if (curr > old) {
-			old = curr;
+		bool changed = moveNodesNew(g, teck_partition);
+		//double curr = getModularityOptimized(g, teck_partition, 1);
+		if (changed) {
 			flag = true;
-			aggregateGraphOptimizedNew(g, teck_partition);
+			aggregateGraphOptimizedNew2(g, teck_partition);
 		}
 		else flag = false;
 	} while (flag);
