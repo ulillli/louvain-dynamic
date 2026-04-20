@@ -36,7 +36,7 @@ int main() {
 	louvain<std::vector<std::pair<int, double>>> L(G);
 	std::cout << std::endl;*/
 
-	for (int i = 27; i < 28; i++) {
+	for (int i = 12; i < 28; i++) {
 		std::string s = "../data/graph" + std::to_string(i) + ".txt";
 		graph<std::vector<std::pair<int, double>>> G(s.data());
 
