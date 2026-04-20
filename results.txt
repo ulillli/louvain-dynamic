@@ -1,0 +1,195 @@
+Count of nodes: 16
+Weight of edges = 28
+Modularity: -0.0714286
+New graph with n = 7 and m = 56
+New graph with n = 2 and m = 56
+Modularity: 0.392219379544258
+Count of communities: 2
+0.0011897
+
+Count of nodes: 168114
+Weight of edges = 6797557
+Modularity: -9.57211747967488e-05
+New graph with n = 2126 and m = 13595114
+New graph with n = 21 and m = 13595114
+New graph with n = 20 and m = 13595114
+Modularity: 0.415019845173077
+Count of communities: 20
+10.5733497
+
+Count of nodes: 196591
+Weight of edges = 950327
+Modularity: -0.000161301882983725
+New graph with n = 43622 and m = 1900654
+New graph with n = 8322 and m = 1900654
+New graph with n = 2052 and m = 1900654
+New graph with n = 1249 and m = 1900654
+New graph with n = 1093 and m = 1900654
+New graph with n = 1054 and m = 1900654
+New graph with n = 1049 and m = 1900654
+Modularity: 0.649603272169998
+Count of communities: 1049
+1.1252194
+
+Count of nodes: 685231
+Weight of edges = 6649471
+Modularity: -0.000316514118565567
+New graph with n = 74164 and m = 13298942
+New graph with n = 9673 and m = 13298942
+New graph with n = 3389 and m = 13298942
+New graph with n = 2221 and m = 13298942
+New graph with n = 1782 and m = 13298942
+New graph with n = 1555 and m = 13298942
+New graph with n = 1429 and m = 13298942
+New graph with n = 1365 and m = 13298942
+New graph with n = 1341 and m = 13298942
+New graph with n = 1337 and m = 13298942
+Modularity: 0.936858333594301
+Count of communities: 1337
+4.2213853
+
+Count of nodes: 1696415
+Weight of edges = 11095298
+Modularity: -6.51178990553202e-05
+New graph with n = 284851 and m = 22190596
+New graph with n = 29724 and m = 22190596
+New graph with n = 6548 and m = 22190596
+New graph with n = 3308 and m = 22190596
+New graph with n = 2833 and m = 22190596
+New graph with n = 2766 and m = 22190596
+New graph with n = 2758 and m = 22190596
+Modularity: 0.77389968631185
+Count of communities: 2758
+15.8846643
+
+Count of nodes: 1632804
+Weight of edges = 22301965
+Modularity: -2.11949185626219e-06
+New graph with n = 193622 and m = 44603930
+New graph with n = 5240 and m = 44603930
+New graph with n = 153 and m = 44603930
+New graph with n = 102 and m = 44603930
+Modularity: 0.61952723589873
+Count of communities: 102
+57.9858127
+
+Count of nodes: 1791489
+Weight of edges = 25444207
+Modularity: -5.76611698993541e-05
+New graph with n = 27127 and m = 50888414
+New graph with n = 114 and m = 50888414
+New graph with n = 40 and m = 50888414
+Modularity: 0.610179819818939
+Count of communities: 40
+60.8151963
+
+Count of nodes: 410236
+Weight of edges = 2439437
+Modularity: -6.33941264892889e-06
+New graph with n = 21322 and m = 4878874
+New graph with n = 2330 and m = 4878874
+New graph with n = 471 and m = 4878874
+New graph with n = 277 and m = 4878874
+New graph with n = 248 and m = 4878874
+New graph with n = 247 and m = 4878874
+Modularity: 0.862271078494359
+Count of communities: 247
+3.9033954
+
+Count of nodes: 410236
+Weight of edges = 2439437
+Modularity: -6.33941264892889e-06
+New graph with n = 21322 and m = 4878874
+New graph with n = 2330 and m = 4878874
+New graph with n = 471 and m = 4878874
+New graph with n = 277 and m = 4878874
+New graph with n = 248 and m = 4878874
+New graph with n = 247 and m = 4878874
+Modularity: 0.862271078494359
+Count of communities: 247
+3.8756073
+
+Count of nodes: 2394385
+Weight of edges = 4659565
+Modularity: -0.0002901263224819
+New graph with n = 27705 and m = 9319130
+New graph with n = 4248 and m = 9319130
+New graph with n = 2944 and m = 9319130
+New graph with n = 2841 and m = 9319130
+New graph with n = 2839 and m = 9319130
+Modularity: 0.581514796347761
+Count of communities: 2839
+11.5938134
+
+Count of nodes: 262111
+Weight of edges = 899792
+Modularity: -6.18813280147908e-06
+New graph with n = 38734 and m = 1799584
+New graph with n = 6336 and m = 1799584
+New graph with n = 564 and m = 1799584
+New graph with n = 238 and m = 1799584
+New graph with n = 196 and m = 1799584
+New graph with n = 195 and m = 1799584
+Modularity: 0.897361134340827
+Count of communities: 195
+1.8525161
+
+Count of nodes: 317080
+Weight of edges = 1049846
+Modularity: -8.9154989214737e-06
+New graph with n = 133915 and m = 2099692
+New graph with n = 56969 and m = 2099692
+New graph with n = 29410 and m = 2099692
+New graph with n = 19845 and m = 2099692
+New graph with n = 16830 and m = 2099692
+New graph with n = 16132 and m = 2099692
+New graph with n = 16020 and m = 2099692
+New graph with n = 16018 and m = 2099692
+Modularity: 0.63241603036937
+Count of communities: 16018
+3.9041133
+
+Count of nodes: 875713
+Weight of edges = 4394752
+Modularity: -1.65225413511736e-05
+New graph with n = 168143 and m = 8789504
+New graph with n = 50474 and m = 8789504
+New graph with n = 23498 and m = 8789504
+New graph with n = 18478 and m = 8789504
+New graph with n = 17725 and m = 8789504
+New graph with n = 17574 and m = 8789504
+New graph with n = 17553 and m = 8789504
+Modularity: 0.863016049993632
+Count of communities: 17553
+14.1220364
+
+Count of nodes: 15
+Weight of edges = 18
+Modularity: -0.0771604938271605
+New graph with n = 8 and m = 36
+New graph with n = 3 and m = 36
+Modularity: 0.425925936549902
+Count of communities: 3
+0.0027513
+
+Count of nodes: 18
+Weight of edges = 25
+Modularity: -0.0624
+New graph with n = 7 and m = 50
+New graph with n = 5 and m = 50
+Modularity: 0.318399984389544
+Count of communities: 5
+0.0030167
+
+Count of nodes: 325729
+Weight of edges = 1090108
+Modularity: -0.000128739440353834
+New graph with n = 42692 and m = 2180216
+New graph with n = 4926 and m = 2180216
+New graph with n = 930 and m = 2180216
+New graph with n = 604 and m = 2180216
+New graph with n = 572 and m = 2180216
+New graph with n = 570 and m = 2180216
+Modularity: 0.934972121969622
+Count of communities: 570
+0.8439341

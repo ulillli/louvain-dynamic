@@ -27,15 +27,11 @@ class louvain {
 public:
 	int getCommunitiesCount();
 	std::vector<int> getPartition();
-	std::vector<std::unordered_set<int>> getCommunities();
 	double getFirstModularity();
 	void printPartition();
 	void printTeckPartition();
 	void printInTot(int n);
-	void printCommunities();
 	void printDebugInfo();
-	void printTeckCommunities();
-	void printResultCommunities();
 	void printD();
 
 	void inizialization(const graph<T>& G);
@@ -46,7 +42,7 @@ public:
 	double getGain(const graph<T>& g, const int& v, const std::vector<int>& partition, const int& C);
 	void remove(int v, int C, const graph<T>& g, std::vector<int>& partition);
 	void insert(int v, int C, const graph<T>& g, std::vector<int>& partition);
-	std::pair<double, int> getBestDelta(const graph<T>& g, const int& v, std::vector<int>& partition);
+	bool getBestDelta(const graph<T>& g, const int& v, std::vector<int>& partition);
 	void aggregateGraph(graph<T>& g, std::vector<int>& partition);
 	bool moveNodes(graph<T>& g, std::vector<int>& partition);
 	louvain(const graph<T>& G);
@@ -141,7 +137,8 @@ void louvain<T>::insert(int v, int C, const graph<T>& g, std::vector<int>& parti
 	tot[C] = tot[C] + d[v];
 }
 template<class T>
-std::pair<double, int> louvain<T>::getBestDelta(const graph<T>& g, const int& v, std::vector<int>& partition) {
+bool louvain<T>::getBestDelta(const graph<T>& g, const int& v, std::vector<int>& partition) {
+	bool flag = false;
 	int m = g.getEdgeCount();
 	int v_community = partition[v];
 	double tmp = in[v_community];
@@ -159,7 +156,18 @@ std::pair<double, int> louvain<T>::getBestDelta(const graph<T>& g, const int& v,
 		}
 	}
 	insert(v, best_community, g, partition);
-	return { best_gain,best_community };
+	if (best_gain > 0.0 && best_community != v_community) {
+		flag = true;
+		partition[v] = best_community;
+		for (int j = 0; j < g[v].size(); j++) {
+			if (v != g[v][j].first) {
+				d_i_to_c[g[v][j].first][best_community] += g[v][j].second;
+				d_i_to_c[g[v][j].first][v_community] -= g[v][j].second;
+				if (d_i_to_c[g[v][j].first][v_community] == 0) d_i_to_c[g[v][j].first].erase(v_community);
+			}
+		}
+	}
+	return flag;
 }
 template<class T>
 void louvain<T>::aggregateGraph(graph<T>& g, std::vector<int>& partition) {
@@ -174,7 +182,6 @@ void louvain<T>::aggregateGraph(graph<T>& g, std::vector<int>& partition) {
 		}
 		partition[v] = renumber[c];
 	}
-
 	if (new_count == n) return;
 
 	for (int i = 0; i < N; i++) {
@@ -205,6 +212,7 @@ void louvain<T>::aggregateGraph(graph<T>& g, std::vector<int>& partition) {
 	n = teck_community_count;
 	g = graph<T>(adj, loops, n, m / 2);
 	setSinglePartition(teck_community_count);
+	std::cout << "New graph with n = " << n << " and m = " << m << std::endl;
 }
 template<class T>
 bool louvain<T>::moveNodes(graph<T>& g, std::vector<int>& partition) {
@@ -216,8 +224,9 @@ bool louvain<T>::moveNodes(graph<T>& g, std::vector<int>& partition) {
 		flag = 0;
 		for (int v = 0; v < n; v++) {
 			int v_community = partition[v];
-			std::pair<double, int> best_delta = getBestDelta(g, v, partition);
-			if (best_delta.first > 0.0 && best_delta.second != v_community) {
+			flag = getBestDelta(g, v, partition);
+			if (flag == true) changed=true;
+			/*if (best_delta.first > 0.0 && best_delta.second != v_community) {
 				flag = 1;
 				changed = 1;
 				partition[v] = best_delta.second;
@@ -228,7 +237,7 @@ bool louvain<T>::moveNodes(graph<T>& g, std::vector<int>& partition) {
 						if (d_i_to_c[g[v][j].first][v_community] == 0) d_i_to_c[g[v][j].first].erase(v_community);
 					}
 				}
-			}
+			}*/
 		}
 	} while (flag);
 	return changed;
