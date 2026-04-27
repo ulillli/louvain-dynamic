@@ -212,7 +212,7 @@ void louvain<T>::aggregateGraph(graph<T>& g, std::vector<int>& partition) {
 	n = teck_community_count;
 	g = graph<T>(adj, loops, n, m / 2);
 	setSinglePartition(teck_community_count);
-	std::cout << "New graph with n = " << n << " and m = " << m << std::endl;
+	std::cout << "New graph with n = " << n << " and communities count = " << teck_community_count << std::endl;
 }
 template<class T>
 bool louvain<T>::moveNodes(graph<T>& g, std::vector<int>& partition) {
