@@ -6,6 +6,11 @@
 #include <iomanip>
 #include "graph.h"
 
+#include <algorithm>
+#include <random>
+#include <numeric>
+#include <omp.h>
+
 const double EPS = 1e-8;
 
 template<class T>
@@ -45,6 +50,7 @@ public:
 	bool getBestDelta(const graph<T>& g, const int& v, std::vector<int>& partition);
 	void aggregateGraph(graph<T>& g, std::vector<int>& partition);
 	bool moveNodes(graph<T>& g, std::vector<int>& partition);
+	bool moveNodesRandom(graph<T>& g, std::vector<int>& partition);
 	louvain(const graph<T>& G);
 };
 
@@ -218,31 +224,58 @@ template<class T>
 bool louvain<T>::moveNodes(graph<T>& g, std::vector<int>& partition) {
 	int n = g.getVertexCount();
 	std::cout << std::setprecision(15);
-	bool flag = 1;
-	bool changed = 0;
-	do {
-		flag = 0;
-		for (int v = 0; v < n; v++) {
-			int v_community = partition[v];
-			flag = getBestDelta(g, v, partition);
-			if (flag == true) changed=true;
-			/*if (best_delta.first > 0.0 && best_delta.second != v_community) {
-				flag = 1;
-				changed = 1;
-				partition[v] = best_delta.second;
-				for (int j = 0; j < g[v].size(); j++) {
-					if (v != g[v][j].first) {
-						d_i_to_c[g[v][j].first][best_delta.second] += g[v][j].second;
-						d_i_to_c[g[v][j].first][v_community] -= g[v][j].second;
-						if (d_i_to_c[g[v][j].first][v_community] == 0) d_i_to_c[g[v][j].first].erase(v_community);
-					}
-				}
-			}*/
-		}
-	} while (flag);
-	return changed;
-}
 
+	bool global_changed = false;
+	bool pass_changed = false;
+
+	do {
+		pass_changed = false;
+		for (int v = 0; v < n; v++) {
+			bool moved = getBestDelta(g, v, partition);
+			if (moved) {
+				pass_changed = true;
+			}
+		}
+		if (pass_changed) {
+			global_changed = true;
+		}
+
+	} while (pass_changed); 
+
+	return global_changed;
+}
+template<class T>
+bool louvain<T>::moveNodesRandom(graph<T>& g, std::vector<int>& partition) {
+	int n = g.getVertexCount();
+	std::cout << std::setprecision(15);
+
+	bool changed_global = false; 
+	bool changed_in_pass = false;
+
+	std::vector<int> random_order(n);
+	std::iota(random_order.begin(), random_order.end(), 0);
+
+	std::random_device rd;
+	std::mt19937 gen(rd());
+
+	do {
+		changed_in_pass = false;
+
+		std::shuffle(random_order.begin(), random_order.end(), gen);
+
+		for (int i = 0; i < n; i++) {
+			int v = random_order[i]; 
+
+			bool moved = getBestDelta(g, v, partition);
+			if (moved) {
+				changed_in_pass = true;
+				changed_global = true;
+			}
+		}
+	} while (changed_in_pass);
+
+	return changed_global;
+}
 template<class T>
 void louvain<T>::inizialization(const graph<T>& G) {
 	N = G.getVertexCount();
