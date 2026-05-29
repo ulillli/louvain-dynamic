@@ -44,9 +44,9 @@ public:
 	void setSinglePartition(int n);
 	double getModularity(const graph<T>& g, const std::vector<int>& partition);
 	double getModularityOptimized(const graph<T>& g, const std::vector<int>& partition, bool flag);
-	double getGain(const graph<T>& g, const int& v, const std::vector<int>& partition, const int& C);
-	void remove(int v, int C, const graph<T>& g, std::vector<int>& partition);
-	void insert(int v, int C, const graph<T>& g, std::vector<int>& partition);
+	double getGain(const graph<T>& g, const int& v, const int& C, double weight_to_c, double totalWeight);
+	void remove(int v, int C, const graph<T>& g, double weight_to_c);
+	void insert(int v, int C, const graph<T>& g, double weight_to_c);
 	bool getBestDelta(const graph<T>& g, const int& v, std::vector<int>& partition);
 	void aggregateGraph(graph<T>& g, std::vector<int>& partition);
 	bool moveNodes(graph<T>& g, std::vector<int>& partition);
@@ -101,15 +101,21 @@ void louvain<T>::reculculate(const graph<T>& g, const std::vector<int>& partitio
 	d_i_to_c = std::vector<std::unordered_map<int, double>>(n);
 	in = std::vector<double>(teck_community_count, 0);
 	tot = std::vector<double>(teck_community_count, 0);
+ 
 	for (int v = 0; v < n; v++) {
+		double loop = g.getWeightOfLoop(v);
 		int v_community = partition[v];
-		in[v] = g.getWeightOfLoop(v);
+		in[v] = loop;
+		tot[v_community] += loop;
+		d[v] += loop;
 		for (auto it = g[v].begin(); it != g[v].end(); it++) {
 			int neighbour = (*it).first;
-			int neighbour_community = partition[neighbour];
-			tot[v_community] += (*it).second;
-			d[v] += (*it).second;
-			if (v != neighbour) d_i_to_c[v][neighbour_community] += (*it).second;
+			int n_community = partition[neighbour];
+			double weight = (*it).second;
+
+			tot[v_community] += weight;
+			d[v] += weight;
+			d_i_to_c[v][n_community] += weight;
 		}
 	}
 }
@@ -122,9 +128,8 @@ void louvain<T>::setSinglePartition(int n) {
 	reculculate(g, teck_partition);
 }
 template<class T>
-double louvain<T>::getGain(const graph<T>& g, const int& v, const std::vector<int>& partition, const int& C) {
-	double totalWeight = 1.0 / (2.0 * g.getEdgeCount());
-	double gain11 = (in[C] + 2.0 * d_i_to_c[v][C]) * totalWeight;
+double louvain<T>::getGain(const graph<T>& g, const int& v, const int& C, double weight_to_c, double totalWeight) {
+	double gain11 = (in[C] + 2.0 * weight_to_c) * totalWeight;
 	double gain12 = ((tot[C] + d[v]) * totalWeight) * ((tot[C] + d[v]) * totalWeight);
 	double gain21 = in[C] * totalWeight;
 	double gain22 = (tot[C] * totalWeight) * (tot[C] * totalWeight);
@@ -132,45 +137,64 @@ double louvain<T>::getGain(const graph<T>& g, const int& v, const std::vector<in
 	return (gain11 - gain12) - (gain21 - gain22 - gain23);
 }
 template<class T>
-void louvain<T>::remove(int v, int C, const graph<T>& g, std::vector<int>& partition) {
-	in[C] = in[C] - 2.0 * d_i_to_c[v][C] - g.getWeightOfLoop(v);
+void louvain<T>::remove(int v, int C, const graph<T>& g, double weight_to_c) {
+	in[C] = in[C] - 2.0 * weight_to_c - g.getWeightOfLoop(v);
 	tot[C] = tot[C] - d[v];
-	if (in[C] < 0) std::cout << "ERROR\n";
+	if (in[C] < 0.0) std::cout << "ERROR: " << in[C] ;
 }
 template<class T>
-void louvain<T>::insert(int v, int C, const graph<T>& g, std::vector<int>& partition) {
-	in[C] = in[C] + 2.0 * d_i_to_c[v][C] + g.getWeightOfLoop(v);
+void louvain<T>::insert(int v, int C, const graph<T>& g, double weight_to_c) {
+	in[C] = in[C] + 2.0 * weight_to_c + g.getWeightOfLoop(v);
 	tot[C] = tot[C] + d[v];
 }
 template<class T>
 bool louvain<T>::getBestDelta(const graph<T>& g, const int& v, std::vector<int>& partition) {
 	bool flag = false;
-	int m = g.getEdgeCount();
+	double totalWeight = 1.0 / (2.0 * g.getEdgeCount());
+
 	int v_community = partition[v];
 	double tmp = in[v_community];
-	remove(v, v_community, g, partition);
-	double best_gain = getGain(g, v, partition, v_community);
+
+	double weight_to_old = 0.0;
+	auto it_old = d_i_to_c[v].find(v_community);
+	if (it_old != d_i_to_c[v].end()) {
+		weight_to_old = it_old->second;
+	}
+
+	remove(v, v_community, g, weight_to_old);
+	double best_gain = getGain(g, v, v_community, weight_to_old, totalWeight);
 	int best_community = v_community;
+
 	for (auto it = d_i_to_c[v].begin(); it != d_i_to_c[v].end(); it++) {
 		int community = it->first;
 		if (community != v_community) {
-			double gain = getGain(g, v, partition, community);
-			if (gain > best_gain && gain > 0 ) { //добавлен gain > 0
+			double gain = getGain(g, v, community, it->second, totalWeight);
+			if (gain > best_gain && gain > 0 ) {
 				best_gain = gain;
 				best_community = community;
 			}
 		}
 	}
-	insert(v, best_community, g, partition);
+	double weight_to_best = weight_to_old;
+	if (best_community != v_community) {
+		auto it_best = d_i_to_c[v].find(best_community);
+		if (it_best != d_i_to_c[v].end()) {
+			weight_to_best = it_best->second;
+		}
+	}
+	insert(v, best_community, g, weight_to_best);
 	if (best_gain > 0.0 && best_community != v_community) {
 		flag = true;
 		partition[v] = best_community;
 		for (int j = 0; j < g[v].size(); j++) {
-			if (v != g[v][j].first) {
-				d_i_to_c[g[v][j].first][best_community] += g[v][j].second;
-				d_i_to_c[g[v][j].first][v_community] -= g[v][j].second;
-				if (d_i_to_c[g[v][j].first][v_community] == 0) d_i_to_c[g[v][j].first].erase(v_community);
+			int neighbor = g[v][j].first;
+			double edge_w = g[v][j].second;
+			d_i_to_c[neighbor][best_community] += edge_w;
+			d_i_to_c[neighbor][v_community] -= edge_w;
+			if (d_i_to_c[neighbor][v_community] <= 0.0) {
+				d_i_to_c[neighbor].erase(v_community);
 			}
+			
 		}
 	}
 	return flag;
@@ -200,13 +224,14 @@ void louvain<T>::aggregateGraph(graph<T>& g, std::vector<int>& partition) {
 	double m = 0;
 	for (int v = 0; v < n; ++v) {
 		int v_comm = partition[v];
+		loops[v_comm] += g.getWeightOfLoop(v);
 		for (const auto& edge : g[v]) {
 			int u = edge.first;
 			double weight = edge.second;
 			int u_comm = partition[u];
 			m += weight;
 			if (v_comm == u_comm)loops[v_comm] += weight;
-			edge_maps[v_comm][u_comm] += weight;
+			else edge_maps[v_comm][u_comm] += weight;
 		}
 	}
 	for (int i = 0; i < teck_community_count; ++i) {
@@ -216,14 +241,13 @@ void louvain<T>::aggregateGraph(graph<T>& g, std::vector<int>& partition) {
 		}
 	}
 	n = teck_community_count;
-	g = graph<T>(adj, loops, n, m / 2);
+	g = graph<T>(adj, loops, n, this->M);
 	setSinglePartition(teck_community_count);
 	std::cout << "New graph with n = " << n << " and communities count = " << teck_community_count << std::endl;
 }
 template<class T>
 bool louvain<T>::moveNodes(graph<T>& g, std::vector<int>& partition) {
 	int n = g.getVertexCount();
-	std::cout << std::setprecision(15);
 
 	bool global_changed = false;
 	bool pass_changed = false;
@@ -231,7 +255,9 @@ bool louvain<T>::moveNodes(graph<T>& g, std::vector<int>& partition) {
 	do {
 		pass_changed = false;
 		for (int v = 0; v < n; v++) {
+
 			bool moved = getBestDelta(g, v, partition);
+
 			if (moved) {
 				pass_changed = true;
 			}
@@ -294,12 +320,13 @@ void louvain<T>::inizialization(const graph<T>& G) {
 }
 template<class T>
 louvain<T>::louvain(const graph<T>& G) {
+	std::cout << std::setprecision(15);
 	inizialization(G);
 	bool flag = false;
-	auto start = std::chrono::steady_clock::now();
 	double old = getModularityOptimized(g, teck_partition, 0);
 	first_modularity = old;
 	std::cout << "Modularity: " << old << '\n';
+	auto start = std::chrono::steady_clock::now();
 	do {
 		flag = moveNodes(g, teck_partition);
 		if (flag) {
@@ -316,17 +343,19 @@ louvain<T>::louvain(const graph<T>& G) {
 template<class T>
 double louvain<T>::getModularityOptimized(const graph<T>& g, const std::vector<int>& partition, bool flag) {
 	int community_count = 0;
-	int n = g.getVertexCount(), m = g.getEdgeCount();
+	int n = g.getVertexCount();
+	double m = g.getEdgeCount();
+	double totalWeight = 1.0/(2.0 * m);
 	community_count = teck_community_count;
 	double result = 0;
 	if (flag == 0) {
 		for (int i = 0; i < community_count; i++) {
-			result += in_G[i] / (2.0f * m) - (tot_G[i] / (2.0f * m)) * (tot_G[i] / (2.0f * m));
+			result += in_G[i] * totalWeight - (tot_G[i] * totalWeight) * (tot_G[i] * totalWeight);
 		}
 	}
 	else {
 		for (int i = 0; i < community_count; i++) {
-			result += in[i] / (2.0f * m) - (tot[i] / (2.0f * m)) * (tot[i] / (2.0f * m));
+			result += in[i] * totalWeight - (tot[i] * totalWeight) * (tot[i] * totalWeight);
 		}
 	}
 	return result;
