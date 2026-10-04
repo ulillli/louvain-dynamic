@@ -3,17 +3,19 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <utility>
 #include<unordered_map>
 
 template<class T>
 class graph{
 	int N;
 	double M;
-	std::vector <T> adj;
+	std::vector<T> adj;
 	std::vector<double> loops;
 public:
 	graph(std::vector <T> v = std::vector <T>(), std::vector<double> l = std::vector<double>(), int n = 0, int m = 0);
 	graph(const char* filename, int flag = 0);
+	graph(char* filename, char type);
 	T & operator[](const int& i);
 	const T& operator[](const int& i) const;
 	double getWeightOfLoop(const int& v) const;
@@ -42,7 +44,7 @@ graph<T>::graph(const char* filename, int flag) { //если flag = 0, то в файле не
 
 				x = distrib(gen);
 				y = distrib(gen);
-				while (x == y) { // Гарантируем, что не сгенерируем петлю (если нужно)
+				while (x == y) { 
 					y = distrib(gen);
 				}
 			}
@@ -67,6 +69,40 @@ graph<T>::graph(const char* filename, int flag) { //если flag = 0, то в файле не
 		//std::cout << m << std::endl;
 		M = m / 2.0;
 	}
+}
+template<class T>
+graph<T>::graph(char* filename, char type) {
+	std::ifstream finput;
+	finput.open(filename, std::fstream::in);
+	int x, y;
+	finput >> x >> y;
+	double nb_links = 0ULL;
+
+	while (!finput.eof()) {
+		unsigned int src, dest;
+		double weight = 1.0L;
+
+		finput >> src >> dest;
+		
+		if (finput) {
+			if (adj.size() <= std::max(src, dest) + 1) {
+				adj.resize(std::max(src, dest) + 1);
+			}
+
+			//adj[src].push_back(std::make_pair(dest, weight));
+			if (src != dest) {
+				adj[src].push_back(std::make_pair(dest, weight));
+				adj[dest].push_back(std::make_pair(src, weight));
+			}
+
+			nb_links += 1ULL;
+		}
+	}
+
+	finput.close();
+	N = adj.size();
+	M = nb_links;
+	loops = std::vector<double>(N, 0.0);
 }
 
 template<class T>
