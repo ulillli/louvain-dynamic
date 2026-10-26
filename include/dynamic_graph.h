@@ -69,6 +69,7 @@ public:
         int N = max_vertex_id + 1;
         std::vector<std::vector<std::pair<int, double>>> snap_adj(N);
         double M_count = 0;
+        std::vector<std::unordered_map<int, double>> snap_edges(N); //повторные взаимодействия пары вершин дают одно ребро
         for (int u = 0; u < N; ++u) {
             //std::unordered_map<int, double> aggregated_edges; // используем map для суммирования весов, если в этом окне вершина u обратилась к v несколько раз.
             //for (const auto& edge : adj[u]) {
@@ -90,10 +91,15 @@ public:
             //M_count += snap_loops[u]; 
             for (const auto& edge : adj[u]) {
                 //if (edge.time>=t_start && edge.time <= t_end) {
-                if (edge.time <= t_end) {
-                    M_count += edge.weight;
-                    snap_adj[edge.from].push_back({ edge.to,edge.weight });
+                if (edge.time <= t_end) { //снимок накопительный: все ребра с time <= t_end, t_start не используется
+                    snap_edges[edge.from].insert({ edge.to,edge.weight });
                 }
+            }
+        }
+        for (int u = 0; u < N; ++u) {
+            for (const auto& e : snap_edges[u]) {
+                snap_adj[u].push_back({ e.first,e.second });
+                M_count += e.second;
             }
         }
         

@@ -5,6 +5,10 @@
 #include <random>
 #include <utility>
 #include<unordered_map>
+#include <unordered_set>
+#include <algorithm>
+#include <stdexcept>
+#include <string>
 
 template<class T>
 class graph{
@@ -13,70 +17,72 @@ class graph{
 	std::vector<T> adj;
 	std::vector<double> loops;
 public:
-	graph(std::vector <T> v = std::vector <T>(), std::vector<double> l = std::vector<double>(), int n = 0, int m = 0);
+	graph(std::vector <T> v = std::vector <T>(), std::vector<double> l = std::vector<double>(), int n = 0, double m = 0);
 	graph(const char* filename, int flag = 0);
 	graph(char* filename, char type);
 	T & operator[](const int& i);
 	const T& operator[](const int& i) const;
 	double getWeightOfLoop(const int& v) const;
 	int getVertexCount() const;
-	int getEdgeCount() const;
+	double getEdgeCount() const;
 	void printAdjList() const;
 	void printNeighbours(const int& v) const;
 };
 template<class T>
-graph<T>::graph(std::vector<T> v, std::vector <double> l, int n, int m) :N(n), M(m), adj(v), loops(l) {}
+graph<T>::graph(std::vector<T> v, std::vector <double> l, int n, double m) :N(n), M(m), adj(v), loops(l) {}
 template<class T>
 graph<T>::graph(const char* filename, int flag) { //если flag = 0, то в файле нет весов ребер, иначе  - есть
 	std::ifstream file(filename, std::ios::in);
+	if (!file.is_open()) throw std::runtime_error(std::string("Cannot open file: ") + filename);
 	file >> N >> M;
 	int x, y;
+	double w = 1.0;
 	adj = std::vector<std::vector<std::pair<int, double>>>(N);
 	loops = std::vector<double>(N, 0.0);
 	std::vector<std::unordered_map<int, double>> adj_tmp = std::vector<std::unordered_map<int, double>>(N);
-	if (flag == 0) {
-		int count = 0;
-		while (file >> x >> y) {
-			if (x >= N || y >= N) {
-				std::random_device rd;
-				std::mt19937 gen(rd());
-				std::uniform_int_distribution<> distrib(0, N - 1);
+	int count = 0;
+	while (file >> x >> y && (flag == 0 || file >> w)) {
+		if (x >= N || y >= N) {
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::uniform_int_distribution<> distrib(0, N - 1);
 
-				x = distrib(gen);
+			x = distrib(gen);
+			y = distrib(gen);
+			while (x == y) { 
 				y = distrib(gen);
-				while (x == y) { 
-					y = distrib(gen);
-				}
-			}
-			if (x != y) {
-				auto result1 = adj_tmp[x].insert({ y,1.0 });
-				auto result2 = adj_tmp[y].insert({ x,1.0 });
-				if (result1.second) count++;
-				if (result2.second) count++;
 			}
 		}
-		//std::cout << count << std::endl;
-		for (int i = 0; i < N; i++) { //добавляем петли сами с 0-ым весом
-			adj_tmp[i].insert({ i,0.0 });
+		if (x != y) {
+			auto result1 = adj_tmp[x].insert({ y,w });
+			auto result2 = adj_tmp[y].insert({ x,w });
+			if (result1.second) count++;
+			if (result2.second) count++;
 		}
-		double m = 0;
-		for (int v = 0; v < N; v++) {
-			for (auto it = adj_tmp[v].begin(); it != adj_tmp[v].end(); it++) {
-				adj[v].push_back({ (*it).first,(*it).second });
-				m += (*it).second;
-			}
-		}
-		//std::cout << m << std::endl;
-		M = m / 2.0;
 	}
+	//std::cout << count << std::endl;
+	for (int i = 0; i < N; i++) { //добавляем петли сами с 0-ым весом
+		adj_tmp[i].insert({ i,0.0 });
+	}
+	double m = 0;
+	for (int v = 0; v < N; v++) {
+		for (auto it = adj_tmp[v].begin(); it != adj_tmp[v].end(); it++) {
+			adj[v].push_back({ (*it).first,(*it).second });
+			m += (*it).second;
+		}
+	}
+	//std::cout << m << std::endl;
+	M = m / 2.0;
 }
 template<class T>
 graph<T>::graph(char* filename, char type) {
 	std::ifstream finput;
 	finput.open(filename, std::fstream::in);
+	if (!finput.is_open()) throw std::runtime_error(std::string("Cannot open file: ") + filename);
 	int x, y;
 	finput >> x >> y;
 	double nb_links = 0ULL;
+	std::unordered_set<unsigned long long> added; //уже добавленные ребра {min, max}
 
 	while (!finput.eof()) {
 		unsigned int src, dest;
@@ -90,12 +96,12 @@ graph<T>::graph(char* filename, char type) {
 			}
 
 			//adj[src].push_back(std::make_pair(dest, weight));
-			if (src != dest) {
+			unsigned long long key = ((unsigned long long)std::min(src, dest) << 32) | std::max(src, dest);
+			if (src != dest && added.insert(key).second) {
 				adj[src].push_back(std::make_pair(dest, weight));
 				adj[dest].push_back(std::make_pair(src, weight));
+				nb_links += 1ULL;
 			}
-
-			nb_links += 1ULL;
 		}
 	}
 
@@ -116,7 +122,7 @@ const T& graph<T>::operator[](const int& i) const {
 template<class T>
 int graph<T>::getVertexCount() const { return N; }
 template<class T>
-int graph<T>::getEdgeCount() const { return M; }
+double graph<T>::getEdgeCount() const { return M; }
 template<class T>
 void graph<T>::printAdjList() const {
 	for (int v = 0; v < adj.size(); v++) {
